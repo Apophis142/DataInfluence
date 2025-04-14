@@ -125,7 +125,8 @@ def compute_influences(
         s_test_num_samples: Optional[int] = None,
         s_test_iterations: int = 1,
         precomputed_s_test: Optional[List[torch.FloatTensor]] = None,
-        train_indices_to_include: Optional[Union[np.ndarray, List[int]]] = None,
+        train_indices_to_include: Optional[Union[np.ndarray, List[int], str]] = None,
+        fill_value: float = np.nan
 ) -> Tuple[Dict[int, float], Dict[int, Dict], List[torch.FloatTensor]]:
 
     if s_test_iterations < 1:
@@ -153,12 +154,11 @@ def compute_influences(
                 ]
         s_test = [a / s_test_iterations for a in s_test]
 
-    influences = {}
-    train_inputs_collections = {}
+    influences = np.full(len(instance_train_data_loader), fill_value=fill_value)
     for index, train_inputs in enumerate(instance_train_data_loader):
 
-        if (train_indices_to_include is not None) and (
-                index not in train_indices_to_include):
+        if (isinstance(train_indices_to_include, np.ndarray) and index not in train_indices_to_include) \
+            and (not isinstance(train_indices_to_include, str) or train_indices_to_include != "all"):
             continue
 
         grad_z = compute_gradients(model=model, inputs=train_inputs)
@@ -170,9 +170,8 @@ def compute_influences(
             ]
 
         influences[index] = sum(influence).item()
-        train_inputs_collections[index] = train_inputs
 
-    return influences, train_inputs_collections, s_test
+    return influences
 
 
 def run_full_influence_functions(
