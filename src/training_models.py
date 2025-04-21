@@ -23,11 +23,12 @@ def get_dataloader(x, y, batch_size=1, random=False):
     return DataLoader(dataset, batch_size=batch_size, sampler=sampler)
 
 
-def train_nn(net, train_loader, x_eval, y_eval, num_epochs, learning_rate):
-    optimizer = optim.SGD(net.parameters(), lr=learning_rate)
+def train_nn(net, train_loader, x_eval, y_eval, num_epochs, learning_rate, loss_function=None):
+    optimizer = optim.Adam(net.parameters(), lr=learning_rate)
     loss_hist = []
     eval_hist = []
-    loss_function = nn.MSELoss()
+    if loss_function is None:
+        loss_function = nn.MSELoss()
 
     with tqdm(total=len(train_loader)*num_epochs, position=0, leave=True) as pbar:
 
